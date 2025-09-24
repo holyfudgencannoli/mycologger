@@ -1,3 +1,7 @@
+import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs'
+import RawMaterialPurchaseLogRecords from "./RawMaterialPurchaseLogRecords"
+import SpecimenPurchaseLogRecords from "./SpecimenPurchaseLogRecords"
+
 const PurchaseLogRecordsNav = createMaterialTopTabNavigator()
 
 export default function PurchaseLogRecordsNavGroup() {

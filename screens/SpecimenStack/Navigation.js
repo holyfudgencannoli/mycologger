@@ -1,6 +1,6 @@
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs'
-import CreateNewSpecimenForm from "./screens/HomeStack/CreateNewSpecimenForm";
-import SpecimenPurchaseLogRecords from "./screens/PurchaseLogRecordsStack/SpecimenPurchaseLogRecords";
+import CreateNewSpecimenForm from "../HomeStack/CreateNewSpecimenForm";
+import SpecimenPurchaseLogRecords from "../PurchaseLogRecordsStack/SpecimenPurchaseLogRecords";
 
 const SpecimenNav = createMaterialTopTabNavigator()
 

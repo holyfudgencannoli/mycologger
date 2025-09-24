@@ -11,12 +11,11 @@ export default function LogoutButton() {
         
 
         try {
-            const res = await fetch("https://react-tasks-online.onrender.com/api/auth/logout", {
+            const res = await fetch("http://10.0.0.45:5000/api/auth/logout", {
                 method: "POST",
                 headers : {
                     Authorization: `Bearer ${token}`
                 },                
-                credentials: "include"
             });
             if (!res.ok) throw new Error("Logout failed");
             

@@ -1,5 +1,5 @@
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs'
-import CreateNewRawMaterialForm from "./screens/HomeStack/CreateNewRawMaterialForm";
+import CreateNewRawMaterialForm from "../HomeStack/CreateNewRawMaterialForm";
 
 
 const RawMaterialNav = createMaterialTopTabNavigator()

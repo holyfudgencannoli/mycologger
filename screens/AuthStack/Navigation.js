@@ -1,7 +1,9 @@
-import Login from "./screens/AuthStack/Login";
+import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs'
+import Login from "./Login";
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import RegisterScreen from "./screens/AuthStack/Register";
-import PasswordRecoveryScreen from "./screens/AuthStack/PasswordRecovery";
+import RegisterScreen from "./Register";
+import PasswordRecoveryScreen from "./PasswordRecovery";
+import MainDrawer from "../HomeStack/Navigation";
 
 const AuthStack = createNativeStackNavigator();
 
