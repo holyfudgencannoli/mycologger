@@ -32,7 +32,7 @@ export default function RegisterScreen() {
         formData.append("is_admin", String(isAdmin));
 
         try {
-            const response = await fetch("http://10.0.0.45:5000/api/auth/register", {
+            const response = await fetch("http://10.0.0.45:5000/api/users/register", {
                 method: "POST",
                 credentials: "include",
                 body: formData,

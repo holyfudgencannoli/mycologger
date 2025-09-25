@@ -18,7 +18,7 @@ const TaskDataTable = () => {
     
     let fetchTasks = async () => {
         try {
-            let res = await fetch('http://10.0.0.45:5000/api/tasks-get', {
+            let res = await fetch('http://10.0.0.45:5000/api/tasks', {
                 method: 'GET',
                 headers: { 'Authorization': `Bearer ${token}` },
                 credentials: 'include'

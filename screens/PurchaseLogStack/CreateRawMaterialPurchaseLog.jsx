@@ -1,31 +1,171 @@
 import { useState, useCallback } from "react"
 import { useAuth } from "../../scripts/AuthContext"
-import { ThemedView } from "../../components/ThemedView";
-import { Surface } from "react-native-paper";
-import * as FileSystem from "expo-file-system";
-import { TextInput, StyleSheet, Text, View, ImageBackground, Button, Alert } from 'react-native';
+import { Surface,TextInput } from "react-native-paper";
+import { StyleSheet, Text, View, ImageBackground, Button, Alert } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
 import ImagePickerExample from "../../components/ImagePicker";
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-
-
+import { useEffect } from "react";
+import { FormInputAutocomplete } from "../../components/FormInputAutoComplete";
+import CrossPlatformDateTimePicker from "../../components/CrossPlatformDateTimePicker";
+import { MeasuringUnitAutocomplete } from "../../components/MeasuringUnitAutoComplete";
 
 
 
 export default function CreateRawMaterialPurchaseLog() {
-    const navigation = useNavigation();
+    const [formState, setFormState] = useState({
+        name: "",
+        category: "",
+        subcategory: "", 
+        brand: "",
+        vendor: ""
+    });
 
+    const handleChange = (key, value) => {
+        setFormState((prev) => ({ ...prev, [key]: value }));
+    };
     const{ user, token } = useAuth();
-    const [pickedImageUri, setPickedImageUri] = useState("")
 
+    const [itemNames, setItemNames] = useState([])
+    const [categories, setCategories] = useState([])
+    const [subcategories, setSubcategories] = useState([])
+    const [vendorsNames, setVendorsNames] = useState([])
+    const [brandNames, setBrandNames] = useState([])
+
+    // utils/uploadReceipt.js
+    async function uploadReceiptToCloudflare({
+        image,
+        token,
+        metadata = {},
+    }) {
+        try {
+            if (!image) {
+            throw new Error("No image selected");
+            }
+
+            // 1️⃣ Ask backend for signed URL
+            const metadataRes = await fetch("http://10.0.0.45:5000/api/get-signed-upload-url", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                ...metadata, // name, vendor, cost, etc.
+                filename: image.split("/").pop(),
+                content_type: "image/jpeg", // adjust if needed
+            }),
+            });
+
+            const { uploadUrl, fileKey, publicUrl, error } = await metadataRes.json();
+            if (!uploadUrl) {
+            throw new Error(error || "Failed to get signed URL");
+            }
+
+            // 2️⃣ Convert local file URI → blob
+            const response = await fetch(image);
+            const blob = await response.blob();
+
+            // 3️⃣ Upload to Cloudflare
+            const uploadRes = await fetch(uploadUrl, {
+            method: "PUT",
+            body: blob,
+            headers: {
+                "Content-Type": "image/jpeg",
+            },
+            });
+
+            if (!uploadRes.ok) {
+            throw new Error("Upload to Cloudflare failed");
+            }
+
+            // 4️⃣ Return the file key so it can be saved in DB
+            return {fileKey, publicUrl};
+
+        } catch (err) {
+            console.error("Upload error:", err);
+            throw err; // let caller handle it
+        }
+    }
+
+
+
+    useEffect(() => {
+        const newVendorCheck = () => {
+            if (vendorsNames.includes(vendor)) {
+                setNewVendor(false)
+            } else {
+                setNewVendor(true)
+            }
+        }
+
+        const fetchItemData = async() => {
+            const res = await fetch('http://10.0.0.45:5000/api/raw-materials', {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                credentials: 'include'
+            })
+            const data = await res.json()
+            
+            const rm = Array.isArray(data.raw_materials) ? data.raw_materials : [];
+            if (rm.length === 0) return;
+            const itemNamesList = rm.map((m) => m.name).filter(Boolean).map((n) => ({label: n, value: n}))
+            const categoriesList = rm.map((m) => m.category).filter(Boolean).map((c) => ({label: c, value: c}))
+            const subcategoriesList = rm.map((m) => m.subcategory).filter(Boolean).map((s) => ({label: s, value: s}))
+            setItemNames(itemNamesList)
+            setCategories(categoriesList)
+            setSubcategories(subcategoriesList)
+        
+        }
+
+        const fetchVendorData = async() => {
+            const res = await fetch('http://10.0.0.45:5000/api/vendors', {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                credentials: 'include'
+            })
+            const data = await res.json()
+            const vendorsObjs = Array.isArray(data.vendors) ? data.vendors : [];
+            if (vendorsObjs.length === 0) return;
+            const vendorsNamesList = vendorsObjs.map((obj) => obj.name).filter(Boolean).map((n) => ({label: n, value: n}))
+            setVendorsNames(vendorsNamesList)
+        }
+
+        const fetchBrandNameData = async() => {
+            const res = await fetch('http://10.0.0.45:5000/api/purchase-logs/raw-materials', {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                credentials: 'include'
+            })
+            const data = await res.json()
+            const rm_logs = Array.isArray(data.rm_logs) ? data.rm_logs : [];
+            if (rm_logs.length === 0) return;
+            const brandNamesList = rm_logs.map((log) => log.brand).filter(Boolean)
+            setBrandNames(brandNamesList)
+            
+        }
+        
+        fetchItemData()
+        fetchVendorData()
+        fetchBrandNameData()
+        newVendorCheck()
+
+    }, [token])
+    
+    const navigation = useNavigation();
+    const [pickedImageUri, setPickedImageUri] = useState("")
     const [name, setName] = useState("")
     const [category, setCategory] = useState("")
     const [subcategory, setSubcategory] = useState("")
     const [brand, setBrand] = useState("")
-    const [logDatetime, setLogDatetime] = useState("")
-    const [purchaseDate, setPurchaseDate] = useState("")
+    const [purchaseDatetime, setPurchaseDatetime] = useState(new Date())
     const [purchaseQuantity, setPurchaseQuantity] = useState(0)
     const [purchaseUnit, setPurchaseUnit] = useState("")
     const [inventoryQuantity, setInventoryQuantity] = useState(0)
@@ -34,6 +174,20 @@ export default function CreateRawMaterialPurchaseLog() {
     const [receiptPath, setReceiptPath] = useState("")
     const [vendor, setVendor] = useState("")
     const [notes, setNotes] = useState("")
+    const [receiptMemo, setReceiptMemo] = useState("")
+    const [image, setImage] = useState(null);
+
+
+
+    const [newVendor, setNewVendor] = useState(false)
+    const [vendorPhone, setVendorPhone] = useState("")
+    const [vendorEmail, setVendorEmail] = useState("")
+    const [vendorWebsite, setVendorWebsite] = useState("")
+
+    const onChangeDate = (event, selectedDate) => {
+        if (selectedDate) setPurchaseDatetime(selectedDate);
+    };
+    
 
     useFocusEffect(
         useCallback(() => {
@@ -43,8 +197,7 @@ export default function CreateRawMaterialPurchaseLog() {
                 setCategory("")
                 setSubcategory("")
                 setBrand("")
-                setLogDatetime("")
-                setPurchaseDate("")
+                setPurchaseDatetime("")
                 setPurchaseQuantity(null)
                 setPurchaseUnit("")
                 setInventoryQuantity(null)
@@ -65,8 +218,7 @@ export default function CreateRawMaterialPurchaseLog() {
                     category !== "" ||
                     subcategory !== "" ||
                     brand !== "" ||
-                    logDatetime !== "" ||
-                    purchaseDate !== "" ||
+                    purchaseDatetime !== "" ||
                     purchaseQuantity !== 0 ||
                     purchaseUnit !== "" ||
                     inventoryQuantity !== 0 ||
@@ -97,17 +249,26 @@ export default function CreateRawMaterialPurchaseLog() {
             return () => {
                 navigation.removeListener('beforeRemove', onBeforeRemove);
             };
-        }, [name, category, subcategory, brand, logDatetime, purchaseDate, purchaseQuantity, purchaseUnit, inventoryQuantity, inventoryUnit, cost, vendor, user, receiptPath, navigation])
+        }, [name, category, subcategory, brand, purchaseDatetime, purchaseQuantity, purchaseUnit, inventoryQuantity, inventoryUnit, cost, vendor, user, receiptPath, navigation])
     );
 
     const handleSubmit = async () => {
+         if (!image) {
+            Alert.alert("Error", "Please select a receipt image");
+            return;
+        }
+        const { fileKey, publicUrl } = await uploadReceiptToCloudflare({
+            image,
+            token,
+            metadata:{}
+        })
+
         const payload = {
             name: name,
             category: category,
             subcategory: subcategory,
             brand: brand,
-            logDatetime: logDatetime,
-            purchaseDate: purchaseDate,
+            purchaseDate: purchaseDatetime,
             purchaseQuantity: purchaseQuantity,
             purchaseUnit: purchaseUnit,
             inventoryQuantity: inventoryQuantity,
@@ -115,10 +276,15 @@ export default function CreateRawMaterialPurchaseLog() {
             cost: cost,
             vendor: vendor,
             user: user,
-            receiptPath: receiptPath,
-            notes : notes
+            filename: fileKey,
+            imageUrl: publicUrl,
+            receiptMemo: receiptMemo,
+            notes : notes,
+            vendorPhone: vendorPhone,
+            vendorEmail: vendorEmail,
+            vendorWebsite: vendorWebsite,
         }
-        const res = await fetch("http://10.0.0.45:5000/api/raw-materials/purchase-logs", {
+        const res = await fetch("http://10.0.0.45:5000/api/purchase-logs/raw-materials", {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -130,6 +296,7 @@ export default function CreateRawMaterialPurchaseLog() {
         
         const data = await res.json()
         console.log(data)
+        console.log(payload)
         return data
     }
 
@@ -151,58 +318,85 @@ export default function CreateRawMaterialPurchaseLog() {
                 <SafeAreaView  style={styles.container}>
                     <Surface style={styles.surfaceMetaContainer}>                        
                         <Surface style={styles.surfaceContainer}>
-                            <Surface style={styles.surface}>
                                 <Text style={styles.title}>New Purchase Log</Text>        
                                 <Text style={styles.subtitle}>(Raw Materials)</Text>        
-                            </Surface>
                         </Surface>
+                        
                         <Surface style={styles.surfaceContainer}>
                             <Surface style={styles.surface}>
-                                <Text style={styles.title}>Upload Receipt</Text>        
-                                <ImagePickerExample />
-                            </Surface>
-                        </Surface>
-                        <Surface style={styles.surfaceContainer}>
-                            <Surface style={styles.surface}>
-                                <TextInput
+                                <FormInputAutocomplete 
+                                    options={["Apple", "Banana", "Orange"]}
                                     placeholder="Item Name"
-                                    label="name"
-                                    value={name}
                                     onChangeText={setName}
-                                    mode="outlined"
-                                    style={styles.input}
+                                    inputValue={name}
                                 />
                             </Surface>
                             <Surface style={styles.surface}>
-                                <TextInput
+                                <FormInputAutocomplete 
+                                    options={["Apple", "Banana", "Orange"]}
                                     placeholder="Category"
-                                    label="category"
-                                    value={category}
                                     onChangeText={setCategory}
-                                    mode="outlined"
-                                    style={styles.input}
+                                    inputValue={category}
                                 />
                             </Surface>
                             <Surface style={styles.surface}>
-                                <TextInput
+                                <FormInputAutocomplete 
+                                    options={["Apple", "Banana", "Orange"]}
                                     placeholder="Subcategory"
-                                    label="Subcategory"
-                                    value={subcategory}
                                     onChangeText={setSubcategory}
-                                    mode="outlined"
-                                    style={styles.input}
+                                    inputValue={subcategory}
                                 />
                             </Surface>
                             <Surface style={styles.surface}>
-                                <TextInput
+                                <FormInputAutocomplete 
+                                    options={["Apple", "Banana", "Orange"]}
                                     placeholder="Brand Name"
-                                    label="brand"
-                                    value={brand}
                                     onChangeText={setBrand}
-                                    mode="outlined"
-                                    style={styles.input}
+                                    inputValue={brand}
                                 />
-                            </Surface>    
+                            </Surface>  
+                                
+                            <Surface style={[styles.measurementBox, styles.surface]}>
+                                <Surface>
+                                    <TextInput
+                                        style={[styles.measurementFloatInput]}
+                                        placeholder="Quantity Purchasing"
+                                        label="purchaseQuantity"
+                                        value={purchaseQuantity}
+                                        onChangeText={setPurchaseQuantity}
+                                        mode="outlined"
+                                    />
+                                </Surface>
+                                <Surface>
+                                    <MeasuringUnitAutocomplete 
+                                        options={["Bag", "Case", "Box", "Package", "Unit"]}
+                                        placeholder="Unit Purchasing"
+                                        onChangeText={setPurchaseUnit}
+                                        inputValue={purchaseUnit}
+                                    />
+                                </Surface>
+                                </Surface>
+                            <Surface style={[styles.measurementBox, styles.surface]}>
+                                <Surface>
+                                    <TextInput
+                                        style={[styles.measurementFloatInput]}
+                                        placeholder="Quantity Inventory"
+                                        label="inventoryQuantity"
+                                        value={inventoryQuantity}
+                                        onChangeText={setInventoryQuantity}
+                                        mode="outlined"
+                                    />
+                                </Surface>
+                                <Surface>
+                                    <MeasuringUnitAutocomplete
+                                        contentContainerStyle={[styles.measurementInput]}
+                                        options={["Pounds", "Kilograms", "Gallons", "Liters", "Ounces", "Milligrams", "Millilitres", "Fluid Ounces"]}
+                                        placeholder="Unit Inventory"
+                                        onChangeText={setInventoryUnit}
+                                        inputValue={inventoryUnit}
+                                    />
+                                </Surface>
+                            </Surface>  
                             <Surface style={styles.surface}>
                                 <TextInput
                                     placeholder="Cost"
@@ -214,13 +408,12 @@ export default function CreateRawMaterialPurchaseLog() {
                                 />
                             </Surface>
                             <Surface style={styles.surface}>
-                                <TextInput
-                                    placeholder="Vendor"
-                                    label="vendor"
-                                    value={vendor}
+                                <FormInputAutocomplete 
+                                    options={["Apple", "Banana", "Orange"]}
+                                    placeholder="Vendor Name"
                                     onChangeText={setVendor}
-                                    mode="outlined"
-                                    style={styles.input}
+                                    inputValue={vendor}
+                                    contentContainerStyle={styles.input}
                                 />
                             </Surface>
                             <Surface style={styles.surface}>
@@ -234,7 +427,65 @@ export default function CreateRawMaterialPurchaseLog() {
                                 />
                             </Surface>
                         </Surface>
-                        <Button title="Submit" onPress={handleSubmit} />
+                        {newVendor ? (
+                            <Surface style={styles.surfaceContainer}>
+                                <Text style={styles.title}>New Vendor Info</Text>        
+                                <Surface style={styles.surface}>
+                                    <TextInput
+                                        placeholder="Vendor Phone Number"
+                                        label="vendorPhone"
+                                        value={vendorPhone}
+                                        onChangeText={setVendorPhone}
+                                        mode="outlined"
+                                        style={styles.input}
+                                    />
+                                    <TextInput
+                                        placeholder="Vendor Email"
+                                        label="vendorEmail"
+                                        value={vendorEmail}
+                                        onChangeText={setVendorEmail}
+                                        mode="outlined"
+                                        style={styles.input}
+                                    />
+                                    <TextInput
+                                        placeholder="Vendor Website"
+                                        label="vendorWebstie"
+                                        value={vendorWebsite}
+                                        onChangeText={setVendorWebsite}
+                                        mode="outlined"
+                                        style={styles.input}
+                                    />
+                                </Surface>
+                            </Surface>
+                        ) : (
+                            <></>
+                        )}
+                        <Surface style={styles.surfaceContainer}>
+                                <Text style={styles.title}>Upload Receipt</Text>        
+                            <Surface style={styles.surface}>
+                                <ImagePickerExample
+                                    image={image}
+                                    setImage={setImage}
+                                />
+                                <TextInput
+                                    multiline
+                                    placeholder="Receipt Memo"
+                                    label="receiptMemo"
+                                    value={receiptMemo}
+                                    onChangeText={setReceiptMemo}
+                                    mode="outlined"
+                                    style={styles.input}
+                                />
+                            </Surface>
+                                <Text style={styles.title}>Receipt Date & Time</Text>        
+                            <Surface style={styles.surface}>
+                                <CrossPlatformDateTimePicker
+                                    purchaseDatetime={purchaseDatetime? purchaseDatetime: new Date()}
+                                    onChangeDate={onChangeDate}
+                                />
+                            </Surface>
+                        </Surface>
+                        <Button color={'#000000'} title="Submit" onPress={() => handleSubmit()} />
                     </Surface>
                 </SafeAreaView>
             </KeyboardAwareScrollView>
@@ -242,8 +493,7 @@ export default function CreateRawMaterialPurchaseLog() {
         // 
         // subcategory
         // 
-        // logDatetime
-        // purchaseDate
+        // purchaseDatetime
         // purchaseQuantity
         // purchaseUnit
         // inventoryQuantity
@@ -263,29 +513,79 @@ const styles = StyleSheet.create({
   text: { fontSize: 20, marginBottom: 20 },
   form: {
     backgroundColor: 'rgba(0, 17, 255, 0.3)',
+    width:66    
   },
   input: {
-    // margin: 24,
+    // margin: 8,
+    // padding: 8,
     // gap: 16,
+    fontSize: 16
   },
+  
   surface: {
     padding: 8,
     backgroundColor: 'white',
-    margin: 8
+    // margin: 8
   },
   surfaceContainer: {
     padding: 16,
     backgroundColor: 'rgba(56,185,255,0.3)'
   },
   surfaceMetaContainer: {
-    backgroundColor: 'rgba(55,255,55,0.4)'
+    backgroundColor: 'rgba(55,255,55,0.4)',
+    width:350
   },
   title: {
     fontSize: 24,
-    textAlign:  'center'
+    textAlign:  'center',
+    fontWeight: 'bold',
+    color: 'red',
+    textShadowColor: 'blue',
+    textShadowRadius: 16,
   },
   subtitle: {
     fontSize: 18,
-    textAlign:  'center'
+    textAlign:  'center',
+    fontWeight: 'bold',
+    color: 'red',
+    textShadowColor: 'blue',
+    textShadowRadius: 16,
+  },
+measurementBox: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 8, // space between inputs (RN 0.71+)
+  paddingHorizontal: 8,
+},
+
+measurementInput: {
+  flex: 1,          // take equal space
+  minWidth: 120,    // never smaller than 120px
+  maxWidth: 180,    // optional: never bigger than 180px
+},
+
+   measurementContainer: {
+    display: 'flex',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    padding: 10,
+  },
+  item: {
+    width: "30%",        // 3 items per row
+    aspectRatio: 1,      // makes it square
+    marginBottom: 10,
+    backgroundColor: "#4682B4",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  measurementText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  measurementFloatInput: {
+    width: 144
   }
 });
