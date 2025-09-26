@@ -23,10 +23,17 @@ export default function CreateRawMaterialPurchaseLog() {
     });
 
     const handleChange = (key, value) => {
-        setFormState((prev) => ({ ...prev, [key]: value }));
+        try{
+            console.log('changing formState...')
+            setFormState((prev) => ({ ...prev, [key]: value }));
+            console.log(`formState changed, added ${key}: ${value}`)
+        } catch(err){
+            console.log("Error changing formState: ", err)
+        }
     };
     const{ user, token } = useAuth();
 
+    const [contentType, setContentType] = useState("")
     const [itemNames, setItemNames] = useState([])
     const [categories, setCategories] = useState([])
     const [subcategories, setSubcategories] = useState([])
@@ -37,48 +44,63 @@ export default function CreateRawMaterialPurchaseLog() {
     async function uploadReceiptToCloudflare({
         image,
         token,
-        metadata = {},
+        contentType
     }) {
-        try {
             if (!image) {
-            throw new Error("No image selected");
+                throw new Error("No image selected");
             }
 
+            let  uploadUrl, fileKey, publicUrl, error 
+        try {
             // 1️⃣ Ask backend for signed URL
-            const metadataRes = await fetch("http://10.0.0.45:5000/api/get-signed-upload-url", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-                ...metadata, // name, vendor, cost, etc.
-                filename: image.split("/").pop(),
-                content_type: "image/jpeg", // adjust if needed
-            }),
+            console.log("Asking backend for signed upload URL...")
+            const metadataRes = await fetch("http://10.0.0.45:5000/api/receipts/get-signed-upload-url", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    filename: image.split("/").pop(),
+                    content_type: contentType,
+                }),
             });
-
-            const { uploadUrl, fileKey, publicUrl, error } = await metadataRes.json();
+            const metadataData = await metadataRes.json();
+            console.log("Backend Response:", metadataData);
+            ({ uploadUrl, fileKey, publicUrl, error } = metadataData);
+            console.log("Items received from backend: ", uploadUrl, fileKey, publicUrl)
+        } catch(err) {
+            console.error("Error fatchin signed URL: ", err)
+            throw err
+        }
             if (!uploadUrl) {
-            throw new Error(error || "Failed to get signed URL");
+                throw new Error(error || "Failed to get signed URL");
             }
-
-            // 2️⃣ Convert local file URI → blob
+            let blob;
+        try{
+            console.log("Converting local file URI → blob")
             const response = await fetch(image);
-            const blob = await response.blob();
+            blob = await response.blob();
+            console.log("Blob ready for upload:", blob);
+        } catch (err) {
+            console.error("Failed to create blob:", err);
+            throw err;
+        }
 
-            // 3️⃣ Upload to Cloudflare
+        try{
+            console.log(" Uploading to Cloudflare...")
             const uploadRes = await fetch(uploadUrl, {
-            method: "PUT",
-            body: blob,
-            headers: {
-                "Content-Type": "image/jpeg",
-            },
+                method: "PUT",
+                body: blob,
+                headers: {
+                    "Content-Type": contentType,
+                },
             });
 
             if (!uploadRes.ok) {
-            throw new Error("Upload to Cloudflare failed");
+              throw new Error("Upload to Cloudflare failed");
             }
+            console.log("Upload successful!");
 
             // 4️⃣ Return the file key so it can be saved in DB
             return {fileKey, publicUrl};
@@ -260,7 +282,7 @@ export default function CreateRawMaterialPurchaseLog() {
         const { fileKey, publicUrl } = await uploadReceiptToCloudflare({
             image,
             token,
-            metadata:{}
+            contentType
         })
 
         const payload = {
@@ -466,6 +488,8 @@ export default function CreateRawMaterialPurchaseLog() {
                                 <ImagePickerExample
                                     image={image}
                                     setImage={setImage}
+                                    contentType={contentType}
+                                    setContentType={setContentType}
                                 />
                                 <TextInput
                                     multiline

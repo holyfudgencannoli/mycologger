@@ -62,19 +62,19 @@ export const MeasuringUnitAutocomplete = ({inputValue, onChangeText, options, pl
 
         {dropdownData.length > 0 && (
             <FlatList
-            
-            style={styles.dropdown}
-            keyboardShouldPersistTaps="handled"
-            data={dropdownData}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => {
-                const value = item.startsWith('Create "') ? item.slice(8, -1) : item;
-                return (
-                <TouchableOpacity onPress={() => handleSelect(value)}>
-                    <Text style={styles.option}>{item}</Text>
-                </TouchableOpacity>
-                );
-            }}
+                nestedScrollEnabled
+                style={styles.dropdown}
+                keyboardShouldPersistTaps="handled"
+                data={dropdownData}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => {
+                    const value = item.startsWith('Create "') ? item.slice(8, -1) : item;
+                    return (
+                    <TouchableOpacity onPress={() => handleSelect(value)}>
+                        <Text style={styles.option}>{item}</Text>
+                    </TouchableOpacity>
+                    );
+                }}
             />
         )}
         </View>

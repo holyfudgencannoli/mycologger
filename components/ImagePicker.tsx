@@ -3,7 +3,7 @@ import { Button, Image, View, StyleSheet, Alert, Switch, Text } from 'react-nati
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 
-export default function ImagePickerExample({image, setImage}) {
+export default function ImagePickerExample({image, setImage, contentType, setContentType}) {
   const [cropEnabled, setCropEnabled] = useState(false);
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null);
   const [libraryPermission, setLibraryPermission] = useState<boolean | null>(null);
@@ -16,6 +16,7 @@ export default function ImagePickerExample({image, setImage}) {
             };
         }, [])
     );
+    
 
   useEffect(() => {
     (async () => {
@@ -52,6 +53,8 @@ export default function ImagePickerExample({image, setImage}) {
 
     if (!result.canceled && result.assets.length > 0) {
       setImage(result.assets[0].uri);
+      setContentType(result.assets[0].mimeType)
+      console.log(result.assets[0].mimeType)
     }
   };
 
