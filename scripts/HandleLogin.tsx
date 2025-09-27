@@ -6,7 +6,7 @@ interface DataResponse{
 
 const handleLogin = async () => {
         try {
-            const res: object = await fetch("http://10.0.0.45:5000/api/auth/login", {
+            const res: Response = await fetch("http://10.0.0.45:5000/api/auth/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
