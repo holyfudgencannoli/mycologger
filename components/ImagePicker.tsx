@@ -9,13 +9,6 @@ export default function ImagePickerExample({image, setImage, contentType, setCon
   const [libraryPermission, setLibraryPermission] = useState<boolean | null>(null);
 
 
-    useFocusEffect(
-        useCallback(() => {
-            return () => {
-                setImage("")
-            };
-        }, [])
-    );
     
 
   useEffect(() => {

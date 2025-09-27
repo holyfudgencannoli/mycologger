@@ -210,6 +210,14 @@ export default function CreateRawMaterialPurchaseLog() {
         if (selectedDate) setPurchaseDatetime(selectedDate);
     };
     
+    
+    useFocusEffect(
+        useCallback(() => {
+            return () => {
+                setImage("")
+            };
+        }, [])
+    );
 
     useFocusEffect(
         useCallback(() => {

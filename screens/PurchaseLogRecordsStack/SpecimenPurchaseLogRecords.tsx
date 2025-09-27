@@ -11,30 +11,30 @@ export default function RawMaterialPurchaseLogRecords() {
     const { user, token } = useAuth()
     const [purchaseLogs, setPurchaseLogs] = useState([])
 
-    const FetchSpecimenPurchaseLogs = async () => {
-        const res = await fetch("http://10.0.0.45:5000/api/specimen/purchase-logs", {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-        })
+    // const FetchSpecimenPurchaseLogs = async () => {
+    //     const res = await fetch("http://10.0.0.45:5000/api/specimen/purchase-logs", {
+    //         method: 'GET',
+    //         headers: {
+    //             'Authorization': `Bearer ${token}`,
+    //             'Content-Type': 'application/json'
+    //         },
+    //         credentials: 'include'
+    //     })
         
-        const data = await res.json()
+    //     const data = await res.json()
         
-        setPurchaseLogs(data.purchase_logs)
-    }
+    //     setPurchaseLogs(data.purchase_logs)
+    // }
 
-    useFocusEffect(
-        useCallback(() => {
-            FetchSpecimenPurchaseLogs()
-        }, [])
-    )
+    // useFocusEffect(
+    //     useCallback(() => {
+    //         FetchSpecimenPurchaseLogs()
+    //     }, [])
+    // )
 
-    useLayoutEffect(() => {
-        FetchSpecimenPurchaseLogs()
-    }, [])
+    // useLayoutEffect(() => {
+    //     FetchSpecimenPurchaseLogs()
+    // }, [])
 
     return(
         <>
