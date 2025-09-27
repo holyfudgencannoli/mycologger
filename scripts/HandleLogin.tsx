@@ -1,7 +1,9 @@
+import User
+
 interface DataResponse{
         msg: string;
         access_token:string;
-        user: object;
+        user: User;
 }
 
 const handleLogin = async () => {
