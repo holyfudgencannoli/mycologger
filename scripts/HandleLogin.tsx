@@ -6,15 +6,15 @@ interface DataResponse{
 
 const handleLogin = async () => {
         try {
-            const res = await fetch("http://10.0.0.45:5000/api/auth/login", {
+            const res: object = await fetch("http://10.0.0.45:5000/api/auth/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify({ username: string, password:string }),
             });
 
-            const data = await res.json();
+            const data: DataResponse = await res.json();
 
             if (res.ok) {
                 const token = data.access_token;
