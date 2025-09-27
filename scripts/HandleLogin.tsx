@@ -1,7 +1,7 @@
 interface DataResponse{
         msg: string;
         access_token:string;
-        
+        user: object;
 }
 
 const handleLogin = async () => {
