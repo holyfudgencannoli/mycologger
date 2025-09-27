@@ -1,3 +1,9 @@
+interface DataResponse{
+        msg: string;
+        access_token:string;
+        
+}
+
 const handleLogin = async () => {
         try {
             const res = await fetch("http://10.0.0.45:5000/api/auth/login", {
