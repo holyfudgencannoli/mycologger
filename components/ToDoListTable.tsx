@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useLayoutEffect, useCallback } from 'react';
 import { View, Text, FlatList, Button, StyleSheet, Animated, Alert } from 'react-native';
-import { useAuth } from '../scripts/AuthContext';
+import { useAuth } from '../features/Authentication/utils/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
 
 interface Task {

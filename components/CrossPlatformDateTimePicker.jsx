@@ -3,7 +3,6 @@ import { Button, StyleSheet } from 'react-native';
 import { Surface } from 'react-native-paper';
 import { ThemedText } from './ThemedText';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
-import { useAuth } from '../scripts/AuthContext';
 import { ThemedView } from './ThemedView';
 import { Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -11,12 +10,12 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function CrossPlatformDateTimePicker({ purchaseDatetime, onChangeDate }) {
 
-        
+    const datetime = purchaseDatetime
 
    
     const showPicker = (mode) => {
         DateTimePickerAndroid.open({
-            value: purchaseDatetime,
+            value: datetime ? datetime : new Date(),
             onChange: onChangeDate,
             mode,
             is24Hour: false,
@@ -35,7 +34,7 @@ export default function CrossPlatformDateTimePicker({ purchaseDatetime, onChange
             <Surface style={[styles.datetimePickerIosContainer, styles.surface]} >
                 <ThemedText style={styles.label}>Due</ThemedText>
                 <DateTimePicker
-                    value={purchaseDatetime}
+                    value={datetime ? datetime : new Date()}
                     onChange={onChangeDate}
                     mode='datetime'
                     display='default'
@@ -44,7 +43,7 @@ export default function CrossPlatformDateTimePicker({ purchaseDatetime, onChange
         ) : (
             <>
                 <Surface style={styles.surface}>
-                    <ThemedText style={styles.label}>{purchaseDatetime.toLocaleString()}</ThemedText>
+                    <ThemedText style={styles.label}>{datetime ? datetime.toLocaleString() : null}</ThemedText>
                 </Surface>
                 <ThemedView style={styles.buttonsDatetime}>
                     <Button color={'#000000'} onPress={showDatePicker} title="Pick Date" />

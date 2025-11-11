@@ -1,4 +1,4 @@
-import { useAuth } from "../scripts/AuthContext";
+import { useAuth } from "../features/Authentication/utils/AuthContext";
 import { Button } from "react-native";
 import { useNavigation, CommonActions } from "@react-navigation/native";
 

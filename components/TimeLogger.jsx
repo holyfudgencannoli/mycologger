@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Button, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAuth } from "../scripts/AuthContext";
+import { useAuth } from "../features/Authentication/utils/AuthContext";
 import { TextInput } from "react-native-paper";
 import { ThemedView } from "./ThemedView";
 

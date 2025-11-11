@@ -1,16 +1,15 @@
 
-
-import { RawMaterialInventoryLog } from "../../interfaceModels/RawMaterialInventoryLog"
+import { Field } from "../../interfaceModels/Field";
 
 interface DataResponse {
-    inventory_logs: RawMaterialInventoryLog[]
+    fields: Field[]
 }
 
-export const FetchRawMaterialInventoryLogs = async (token, setInventoryLogs) => {
-        console.log("Asking backend for inventory logs for raw materials...")
+export const FetchFields = async (token, setFields) => {
+        console.log("Asking backend for fields...")
         let data: DataResponse;
         try{
-            const res = await fetch("http://10.0.0.45:5000/api/inventory/raw-materials", {
+            const res = await fetch("http://10.0.0.45:5000/api/fields", {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -25,7 +24,7 @@ export const FetchRawMaterialInventoryLogs = async (token, setInventoryLogs) => 
 
             data = await res.json()
             console.log("Received data:", data);
-            setInventoryLogs(data.inventory_logs)
+            setFields(data.fields)
 
         } catch (err) {
             console.error("Fetch error:", err);

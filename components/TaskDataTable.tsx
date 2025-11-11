@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { DataTable } from 'react-native-paper';
-import { useAuth } from '../scripts/AuthContext';
+import { useAuth } from '../features/Authentication/utils/AuthContext';
 import { useLayoutEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
