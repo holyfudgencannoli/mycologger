@@ -12,6 +12,8 @@ export interface Column {
   key: string;
   title: string;
   render?: (item: any) => React.ReactNode;
+  unit?: string;
+  msDate?: boolean;
 }
 
 export interface ScrollableDataTableProps {
@@ -41,7 +43,22 @@ export const ScrollableDataTable: React.FC<ScrollableDataTableProps> = ({
       <View style={[{ flexDirection: "row", paddingVertical: 8 }, rowStyle]}>
         {columns.map((col) => (
           <View key={col.key} style={{ flex: 1 }}>
-            {col.render ? col.render(item) : <Text style={cellTextStyle}>{item[col.key]}</Text>}
+            {col.msDate === true ? 
+                <Text style={cellTextStyle}>{`${new Date(item[col.key]).toLocaleString('en-GB', {
+                    hour12: true,
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric',
+                    month: "short",
+                    day: 'numeric',
+
+                })}`}</Text> :
+                col.unit ?
+                <Text style={cellTextStyle}>{item[col.key]} {item[col.unit]}</Text> :
+                col.render ?
+                col.render(item) : 
+                <Text style={cellTextStyle}>{item[col.key]}</Text>
+                }
           </View>
         ))}
       </View>

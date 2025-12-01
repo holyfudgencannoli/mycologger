@@ -1,14 +1,20 @@
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { useAuth } from "../../hooks/useAuthContext"
 import { Surface,TextInput } from "react-native-paper";
 import { StyleSheet, Text, Button } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTheme } from "../../hooks/useTheme";
 import { apiFetch } from "../../services/apiFetch";
 import { View } from "react-native-reanimated/lib/typescript/Animated";
+import * as RawMat from './../../data/db/raw-materials'
+import * as InvItem from '../../data/db/inventory-items/queries'
+import { SQLiteRunResult } from "expo-sqlite";
+import * as InvLog from './../../data/db/inventory-logs'
+import { useSQLiteContext } from "expo-sqlite";
 
 
 export default function CreateRawMaterial() {
+    const db =  useSQLiteContext()
     const{ token } = useAuth();
     const navigation = useNavigation();
     const [name, setName] = useState("")
@@ -16,17 +22,32 @@ export default function CreateRawMaterial() {
     const [subcategory, setSubcategory] = useState("")
     const { theme } = useTheme()
 
+    useFocusEffect(
+        useCallback(() => {
+            return () => {
+                setName('');
+                setCategory('');
+                setSubcategory('');
+            };
+        }, [])
+    );
+
+
+
     const handleSubmit = async () => {
-        const payload = {
-            name: name,
-            category: category,
-            subcategory: subcategory,
-        }        
-        const data = await apiFetch('raw-materials', 'POST', token, payload)
-        // console.log(data)
-        // console.log(payload)
-        navigation.navigate("Raw Materials List")
-        return data
+        const type = 'raw_material'
+        const created_at = new Date().getTime()
+        try {
+            const invItemId = await InvItem.create(db, type, created_at);
+            console.log(invItemId)
+            const RawMatId = await RawMat.create(db, invItemId, name, category, subcategory)
+            console.log(RawMatId)
+            const invLogId = await InvLog.create(db, type, RawMatId, 0, '', new Date().getTime())
+            navigation.navigate("Dashboard")
+            return { invItemId, RawMatId }
+        } catch (error) {
+            console.error(error)
+        }
     }
 
 

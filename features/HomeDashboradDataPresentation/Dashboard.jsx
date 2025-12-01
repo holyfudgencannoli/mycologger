@@ -12,25 +12,6 @@ export default function Dashboard() {
     const { user, token } = useAuth()
     const [tasksToday, setTasksToday] = useState([])
 
-    const fetchTodaysTasks = async () => {
-        const res = await fetch('https://react-tasks-online.onrender.com/api/get-tasks-today', {
-            method: 'GET',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/js' },
-            credentials: 'include',
-        });
-        const data = await res.json();
-        setTasksToday(data.tasks)
-    }
-
-    useLayoutEffect(() => {
-        fetchTodaysTasks();
-    }, [])
-
-    useFocusEffect(
-        useCallback(() => {
-            fetchTodaysTasks();
-        }, [])
-    );
 
     // const data = tasksToday.map((task) => ({
     //     id: task.id,

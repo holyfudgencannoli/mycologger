@@ -5,33 +5,51 @@ import { StyleSheet, Text, View, ImageBackground, Button, Alert } from 'react-na
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ImagePickerExample from "../../components/ImagePicker";
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+// import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useEffect } from "react";
 import { FormInputAutocomplete } from "../../components/FormInputAutoComplete";
 import CrossPlatformDateTimePicker from "../../components/CrossPlatformDateTimePicker";
 import { MeasuringUnitAutocomplete } from "../../components/MeasuringUnitAutoComplete";
-import newVendorCheck from "../../hooks/UseNewVendorCheck";
 import { fetchVendorData } from "../../services/DataObjectFetchers/VendorNames";
 import { uploadReceiptToCloudflare } from "../../services/UploadReceiptToCloudflare";
 import { apiFetch } from "../../services/apiFetch";
 import UploadReceipt from "../UploadReceipt";
 import CreateVendor from "./CreateVendor";
+import { Picker } from "@react-native-picker/picker";
+import * as InvItem from './../../data/db/inventory-items'
+import * as RawMat from './../../data/db/bio-materials'
+import * as PurchLog from './../../data/db/purchase-logs'
+import * as InvLog from './../../data/db/inventory-logs'
+import * as Vendor from './../../data/db/vendors'
+import * as Brand from './../../data/db/brands'
+import * as cnv from '../../../mycologger-0.0.1/src/utils/unitConversion'
+import { useSQLiteContext } from "expo-sqlite";
 
 
 
 
-export default function CreateRawMaterialPurchase() {
+export default function CreateRawMaterialPurchase({
+    name,
+    category,
+    subcategory,
+    setCategory,
+    setSubcategory
+} : {
+    name?: string,
+    category?: string,
+    subcategory?: string,
+    setCategory?: (category: string) => void,
+    setSubcategory?: (subcategory: string) => void
+}) {
     const{ user, token } = useAuth();
+    const db = useSQLiteContext();
 
-    const navigation = useNavigation();    
+    // const navigation = useNavigation();    
 
-    const [itemNames, setItemNames] = useState([])
-    const [brandNames, setBrandNames] = useState([])
+    const [formVisible, setFormVisible] = useState(false)
     const [pickedImageUri, setPickedImageUri] = useState("")
-    const [name, setName] = useState("")
-    const [category, setCategory] = useState("")
-    const [subcategory, setSubcategory] = useState("")
     const [brand, setBrand] = useState("")
+    const [newBrand, setNewBrand] = useState(false)
     const [purchaseQuantity, setPurchaseQuantity] = useState("")
     const [purchaseUnit, setPurchaseUnit] = useState("")
     const [inventoryQuantity, setInventoryQuantity] = useState("")
@@ -42,7 +60,8 @@ export default function CreateRawMaterialPurchase() {
 
     const [vendor, setVendor] = useState("")
 
-    const [vendorsNames, setVendorsNames] = useState([])
+    const [vendors, setVendors] = useState([])
+    const [brands, setBrands] = useState([])
     const [newVendor, setNewVendor] = useState(false)
     const [vendorPhone, setVendorPhone] = useState("")
     const [vendorEmail, setVendorEmail] = useState("")
@@ -55,30 +74,24 @@ export default function CreateRawMaterialPurchase() {
     
     const [purchaseDatetime, setPurchaseDatetime] = useState(new Date())
   
-    async function itemLookup(name: string) {
-        const data: any = await apiFetch(`/raw-materials/${encodeURIComponent(name)}`, 'GET', token)
-        console.log("DATA: ", data.raw_material)
-        setCategory(data.raw_materials.category)
-        setSubcategory(data.raw_materials.subcategory)
-        const brandNames = (data.brand_names.map(name => {name}))
-        setBrandNames(brandNames)
-        const vendorNames = (data.vendor_names.map(name => name))
-        setVendorsNames(vendorNames)
+    async function getVendors() {
+        const vendor_rows = await Vendor.readAll(db)
+        setVendors([...vendor_rows, {id: 999999, name: 'New Vendor'}])
+        return vendor_rows
+    }
+
+    async function getBrands() {
+        const brand_rows = await Brand.readAll(db)
+        setBrands([...brand_rows, {id: 999999, name: 'New Brand'}])
+        return brand_rows
     }
 
     useEffect(() => {
-        getItemNames()
-        newVendorCheck({vendor, token, setVendorsNames, vendorsNames, setNewVendor})
-        fetchVendorData(token, setVendorsNames)
+        getVendors()
+        getBrands()
 
-    }, [token])
+    }, [])
 
-    const getItemNames = async() => {
-        const data: any = await apiFetch('raw-materials', 'GET', token)
-        const rm = data.raw_materials
-        const names = rm.map((rm: any) => rm.name)
-        setItemNames(names)
-    }
 
     
     const handleSubmit = async () => {
@@ -86,38 +99,68 @@ export default function CreateRawMaterialPurchase() {
             Alert.alert("Error", "Please select a receipt image");
             return;
         }
-        const { fileKey, publicUrl } = await uploadReceiptToCloudflare({
-            image,
-            token,
-            contentType
-        })
+        // const { fileKey, publicUrl } = await uploadReceiptToCloudflare({
+        //     image,
+        //     token,
+        //     contentType
+        // })
 
-        const payload = {
-            name: name,
-            category: category,
-            subcategory: subcategory,
-            brand: brand,
-            purchaseDate: purchaseDatetime,
-            purchaseQuantity: parseInt(purchaseQuantity),
-            purchaseUnit: purchaseUnit,
-            inventoryQuantity: parseInt(inventoryQuantity),
-            inventoryUnit: inventoryUnit,
-            cost: parseInt(cost),
-            vendor: vendor,
-            user: user,
-            filename: fileKey,
-            imageUrl: publicUrl,
-            receiptMemo: receiptMemo,
-            notes : notes,
-            vendorPhone: vendorPhone,
-            vendorEmail: vendorEmail,
-            vendorWebsite: vendorWebsite,
-        }
+        // const payload = {
+        //     name: name,
+        //     category: category,
+        //     subcategory: subcategory,
+        //     brand: brand,
+        //     purchaseDate: purchaseDatetime,
+        //     purchaseQuantity: parseInt(purchaseQuantity),
+        //     purchaseUnit: purchaseUnit,
+        //     inventoryQuantity: parseInt(inventoryQuantity),
+        //     inventoryUnit: inventoryUnit,
+        //     cost: parseInt(cost),
+        //     vendor: vendor,
+        //     user: user,
+        //     filename: fileKey,
+        //     imageUrl: publicUrl,
+        //     receiptMemo: receiptMemo,
+        //     notes : notes,
+        //     vendorPhone: vendorPhone,
+        //     vendorEmail: vendorEmail,
+        //     vendorWebsite: vendorWebsite,
+        // }
         
-        const data = await apiFetch('/purchase-logs/raw-materials', 'POST', token, payload)
-        console.log(data)
-        console.log(payload)
-        return data
+        const created_at = new Date().getTime();
+        const invItemId = await InvItem.create(db, 'bio_materials', created_at)
+        const rawMatId = await RawMat.create(db, invItemId, name, category, subcategory)
+        await PurchLog.create(
+            db,
+            'bio_materials',
+            rawMatId,
+            created_at,
+            purchaseDatetime.getTime(),
+            purchaseUnit,
+            cnv.convertFromBase({
+                value: parseFloat(purchaseQuantity),
+                to: purchaseUnit
+            }), inventoryUnit,
+            cnv.convertFromBase({
+                value: parseFloat(inventoryQuantity),
+                to: inventoryUnit
+            }),
+            vendor,
+            brand,
+            parseFloat(cost)
+        )
+        await InvLog.create(
+            db,
+            'bio_materials',
+            rawMatId,
+            cnv.convertToBase({
+                value: parseFloat(purchaseQuantity) * parseFloat(inventoryQuantity),
+                from: inventoryUnit
+            }),
+            inventoryUnit,
+            created_at
+        )
+        return {invItemId, rawMatId}
     }
 
 
@@ -129,16 +172,6 @@ export default function CreateRawMaterialPurchase() {
             </Surface>
             
             <Surface style={styles.surfaceContainer}>
-                <Surface style={styles.surface}>
-                    <FormInputAutocomplete 
-                        options={itemNames}
-                        placeholder="Item Name"
-                        onChangeText={setName}
-                        inputValue={name}
-                        onSelect={itemLookup}
-                    />
-                    <Button title="populate fields" onPress={() => itemLookup(name)} />
-                </Surface>
                 <Surface style={styles.surface}>
                     <TextInput
                         placeholder="Category"
@@ -158,36 +191,50 @@ export default function CreateRawMaterialPurchase() {
                     />
                 </Surface>
                 <Surface style={styles.surface}>
-                    <FormInputAutocomplete 
-                        options={["Apple", "Banana", "Orange"]}
-                        placeholder="Brand Name"
-                        onChangeText={setBrand}
-                        inputValue={brand}
-                    />
+                    <Picker 
+                        onValueChange={(value: any)=> {
+                            if (value.id === 999999) {
+                                setBrand(null)
+                                setNewBrand(true)
+                            } else{
+                                setBrand(value)
+                                setNewBrand(false)
+                            }
+                        }}    
+                    >
+                        {brands.map((b) => {
+                            return(
+                                <Picker.Item label={b.name} value={{...b}} />
+                            )
+                        })}
+                    </Picker>
                 </Surface>  
                     
                 <Surface style={[styles.measurementBox, styles.surface]}>
-                    <Surface>
-                        <TextInput
-                            style={[styles.measurementFloatInput]}
-                            placeholder="Quantity Purchasing"
-                            label="purchaseQuantity"
-                            value={purchaseQuantity}
-                            onChangeText={setPurchaseQuantity}
-                            mode="outlined"
-                        />
+                    <TextInput
+                        style={[styles.measurementFloatInput]}
+                        placeholder="Quantity Purchasing"
+                        label="purchaseQuantity"
+                        value={purchaseQuantity}
+                        onChangeText={setPurchaseQuantity}
+                        mode="outlined"
+                    />
+                    <Surface style={{ flex: 1}}>
+                        <Picker
+                            placeholder="Unit"
+                            onValueChange={(value: 'string') => {
+                                setPurchaseUnit(value)
+                            }}
+                        >
+                            <Picker.Item label="Unit" value={'unit'} />
+                            <Picker.Item label="Bag" value={'bag'} />
+                            <Picker.Item label="Case" value={'case'} />
+                            <Picker.Item label="Box" value={'box'} />
+                            <Picker.Item label="Package" value={'package'} />
+                        </Picker>
                     </Surface>
-                    <Surface>
-                        <MeasuringUnitAutocomplete 
-                            options={["Bag", "Case", "Box", "Package", "Unit"]}
-                            placeholder="Unit Purchasing"
-                            onChangeText={setPurchaseUnit}
-                            inputValue={purchaseUnit}
-                        />
-                    </Surface>
-                    </Surface>
+                </Surface>
                 <Surface style={[styles.measurementBox, styles.surface]}>
-                    <Surface>
                         <TextInput
                             style={[styles.measurementFloatInput]}
                             placeholder="Quantity Inventory"
@@ -196,15 +243,24 @@ export default function CreateRawMaterialPurchase() {
                             onChangeText={setInventoryQuantity}
                             mode="outlined"
                         />
-                    </Surface>
-                    <Surface>
-                        <MeasuringUnitAutocomplete
-                            // contentContainerStyle={styles.measurementInput}
-                            options={["Pounds", "Kilograms", "Gallons", "Liters", "Ounces", "Milligrams", "Millilitres", "Fluid Ounces"]}
-                            placeholder="Unit Inventory"
-                            onChangeText={setInventoryUnit}
-                            inputValue={inventoryUnit}
-                        />
+                    <Surface style={{ flex: 1}}>
+                        <Picker
+                            placeholder="Unit"
+                            onValueChange={(value: 'string') => {
+                                setInventoryUnit(value)
+                            }}
+                        >
+                            <Picker.Item label="Unit" value={'unit'} />
+                            <Picker.Item label="Grams" value={'gram'} />
+                            <Picker.Item label="Kilograms" value={'kilogram'} />
+                            <Picker.Item label="milliLiters" value={'milliliter'} />
+                            <Picker.Item label="Liters" value={'liter'} />
+                            <Picker.Item label="Pounds" value={'pound'} />
+                            <Picker.Item label="Ounces" value={'ounce'} />
+                            <Picker.Item label="Cups" value={'cup'} />
+                            <Picker.Item label="Teaspoons" value={'teaspoon'} />
+                            <Picker.Item label="Tablespoons" value={'tablespoon'} />
+                        </Picker>
                     </Surface>
                 </Surface>  
                 <Surface style={styles.surface}>
@@ -218,13 +274,23 @@ export default function CreateRawMaterialPurchase() {
                     />
                 </Surface>
                 <Surface style={styles.surface}>
-                    <FormInputAutocomplete 
-                        options={["Apple", "Banana", "Orange"]}
-                        placeholder="Vendor Name"
-                        onChangeText={setVendor}
-                        inputValue={vendor}
-                        // contentContainerStyle={styles.input}
-                    />
+                    <Picker 
+                        onValueChange={(value: any)=> {
+                            if (value.id === 999999) {
+                                setVendor(null)
+                                setNewVendor(true)
+                            } else{
+                                setVendor(value)
+                                setNewVendor(false)
+                            }
+                        }}    
+                    >
+                        {vendors.map((v) => {
+                            return(
+                                <Picker.Item label={v.name} value={{...v}} />
+                            )
+                        })}
+                    </Picker>
                 </Surface>
                 <Surface style={styles.surface}>
                     <TextInput
@@ -238,7 +304,9 @@ export default function CreateRawMaterialPurchase() {
                 </Surface>
             </Surface>
             {newVendor ? (
-                <CreateVendor />
+                <CreateVendor
+
+                />
             ) : (
                 <></>
             )}
@@ -268,7 +336,7 @@ const styles = StyleSheet.create({
     // margin: 8,
     // padding: 8,
     // gap: 16,
-    fontSize: 16
+    fontSize: 16 
   },
   surface: {
     padding: 16,

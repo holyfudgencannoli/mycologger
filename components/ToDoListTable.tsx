@@ -22,7 +22,7 @@ export default function ToDoListNative() {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch('https://react-tasks-online.onrender.com/api/get-tasks-to-do', {
+      const res = await fetch('https://react-tasks-online.onrender.com/api/ks-to-do', {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
         credentials: 'include',

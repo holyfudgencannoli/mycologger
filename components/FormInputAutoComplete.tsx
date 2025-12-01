@@ -11,7 +11,7 @@ import { useState, useCallback } from "react"
 import { StyleSheet, Text, View, ImageBackground, Button, Alert } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useEffect } from "react";
-import { TextInput } from "react-native-paper";
+import { Portal, TextInput } from "react-native-paper";
 
 
 
@@ -25,7 +25,7 @@ export const FormInputAutocomplete = ({inputValue, onChangeText, options, placeh
         onChangeText(text);
 
         const filtered = options.filter((opt) =>
-        opt.toLowerCase().includes(text.toLowerCase())
+            opt.toLowerCase().includes(text.toLowerCase())
         );
         setFilteredOptions(filtered);
 
@@ -64,21 +64,23 @@ export const FormInputAutocomplete = ({inputValue, onChangeText, options, placeh
         />
 
         {dropdownData.length > 0 && (
-            <FlatList
-                nestedScrollEnabled
-                style={styles.dropdown}
-                keyboardShouldPersistTaps="handled"
-                data={dropdownData}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item }) => {
-                    const value = item.startsWith('Create "') ? item.slice(8, -1) : item;
-                    return (
-                    <TouchableOpacity onPress={() => handleSelect(value)}>
-                        <Text style={styles.option}>{item}</Text>
-                    </TouchableOpacity>
-                    );
-                }}
-            />
+            <Portal.Host>
+                <FlatList
+                    nestedScrollEnabled
+                    style={styles.dropdown}
+                    keyboardShouldPersistTaps="handled"
+                    data={dropdownData}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({ item }) => {
+                        const value = item.startsWith('Create "') ? item.slice(8, -1) : item;
+                        return (
+                        <TouchableOpacity onPress={() => handleSelect(value)}>
+                            <Text style={styles.option}>{item}</Text>
+                        </TouchableOpacity>
+                        );
+                    }}
+                />
+            </Portal.Host>
         )}
         </View>
     );

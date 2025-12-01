@@ -1,11 +1,18 @@
-import { useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useState } from "react";
 import { StyleSheet, Text } from "react-native";
 import { Surface, TextInput } from "react-native-paper";
 
-export default function CreateVendor() {
-    const [vendorPhone, setVendorPhone] = useState("")
-    const [vendorEmail, setVendorEmail] = useState("")
-    const [vendorWebsite, setVendorWebsite] = useState("")
+export default function CreateVendor({phone, email, website}: {phone?: string, email?: string, website?: string}) {
+    const [vendorPhone, setVendorPhone] = useState('')
+    const [vendorEmail, setVendorEmail] = useState(email? email: '')
+    const [vendorWebsite, setVendorWebsite] = useState(website? website: '')
+
+    useFocusEffect(
+        useCallback(() => {
+            setVendorPhone(phone)
+        }, [])
+    )
 
     
     return (
@@ -15,7 +22,7 @@ export default function CreateVendor() {
                 <TextInput
                     placeholder="Vendor Phone Number"
                     label="vendorPhone"
-                    value={vendorPhone}
+                    value={phone}
                     onChangeText={setVendorPhone}
                     mode="outlined"
                     style={styles.input}

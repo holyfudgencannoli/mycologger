@@ -34,7 +34,7 @@ export const ScreenPrimative: React.FC<ScreenProps> = ({
       >
         <Container
           contentContainerStyle={!scroll ? [styles.contentContainer, contentContainerStyle] : undefined}
-          style={!scroll ? [styles.contentContainer, style] : undefined}
+          style={!scroll ? [styles.flex, style] : [styles.contentContainer, style]}
           keyboardShouldPersistTaps="handled"
         >
           {children}
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    flex: 1,
+    flexGrow: 1,
     padding: 16,
   },
 });

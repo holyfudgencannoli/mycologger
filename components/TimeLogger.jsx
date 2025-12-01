@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Button, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAuth } from "../features/Authentication/utils/AuthContext";
-import { TextInput } from "react-native-paper";
-import { ThemedView } from "./ThemedView";
+// import { uaseAuth } from "../features/Authentication/utils/AuthContext";
+// import { TextInput } from "react-native-paper";
+// import { ThemedView } from "./ThemedView";
 
 export default function TimeLogger({
   startTime,
@@ -12,7 +12,7 @@ export default function TimeLogger({
   setEndTime,
   onTimesSet,
 }) {
-
+    
   const handlePress = async () => {
     if (!startTime) {
       // First click → Save start time

@@ -1,13 +1,10 @@
 
 import { RawMaterial } from "../../interfaceModels/RawMaterial";
 
-interface DataResponse {
-    raw_materials: RawMaterial[]
-}
 
 export const FetchRawMaterials = async (token, setRawMaterials) => {
         console.log("Asking backend for raw material data...")
-        let data: DataResponse;
+        let data;
         try{
             const res = await fetch("http://10.0.0.45:5000/api/raw-materials", {
                 method: 'GET',
@@ -24,7 +21,7 @@ export const FetchRawMaterials = async (token, setRawMaterials) => {
 
             data = await res.json()
             console.log("Received data:", data);
-            setRawMaterials(data.raw_materials)
+            setRawMaterials(data[data])
 
         } catch (err) {
             console.error("Fetch error:", err);

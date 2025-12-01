@@ -1,4 +1,4 @@
-import { StyleSheet, View, ImageBackground, Button, Text } from 'react-native';
+import { StyleSheet, View, Button, Text } from 'react-native';
 import 'react-native-reanimated';
 import { Surface, TextInput } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';

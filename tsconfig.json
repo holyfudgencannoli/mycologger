@@ -1,4 +1,20 @@
 {
-  "compilerOptions": {},
+  "compilerOptions": {
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@db": ["data/db"],
+      "@db/*": ["data/db/*"],
+      "@hooks": ["hooks"],
+      "@hooks/*": ["hooks/*"],
+      "@utils": ["utils"],
+      "@utils/*": ["utils/*"],
+      "@components": ["components"],
+      "@components/*": ["components/*"],
+      "@features": ["features"],
+      "@features/*": ["features/*"]
+      // add more as you want
+    }
+  },
   "extends": "expo/tsconfig.base"
 }

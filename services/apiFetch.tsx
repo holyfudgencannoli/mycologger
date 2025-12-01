@@ -11,10 +11,6 @@ type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
 // Generic API response type
 export interface ApiResponse<T> {
-    tasks?: TaskDataObject[];
-    specimen?: SpecimenDataObject[];
-    fields?: Field[];
-    sterilizations?: Sterilization[];
     success?: boolean;
     data?: T;
     error?: string;
